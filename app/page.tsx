@@ -1,38 +1,71 @@
 'use client';
 
-export default function ARPage() {
+import React, { useState } from 'react';
+
+export default function CreateMemory() {
+  const [title, setTitle] = useState('');
+  const [memo, setMemo] = useState('');
+  const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+
+  // 現在地を取得する関数
+  const getGeoLocation = () => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      setCoords({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      });
+    });
+  };
+
   return (
-    <main style={{ width: '100vw', height: '100vh', margin: 0, overflow: 'hidden' }}>
-      {/* 1. Next.jsの機能を使わず、直接HTMLタグでライブラリを叩き込む */}
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/aframevr/aframe@master/dist/aframe-v1.3.0.min.css" />
-      <script src="https://aframe.io/releases/1.3.0/aframe.min.js" async></script>
-      <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js" async></script>
+    <div className="min-h-screen bg-slate-50 p-6 font-sans">
+      {/* ポケポケ風：ガラスのようなヘッダー */}
+      <div className="max-w-md mx-auto bg-white/70 backdrop-blur-md rounded-3xl shadow-xl p-8 border border-white/40">
+        <h1 className="text-2xl font-bold text-slate-800 mb-6 text-center">思い出をカプセルに</h1>
 
-      {/* 2. ARシーンの設定 */}
-      <a-scene
-        embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; videoTexture: true;"
-        vr-mode-ui="enabled: false"
-        style={{ width: '100%', height: '100%' }}
-      >
-        {/* 葛西臨海公園の座標（巨大な箱） */}
-        <a-box
-          gps-entity-place="latitude: 35.653051; longitude: 139.877172;"
-          scale="15 15 15"
-          material="color: #00e5ff; opacity: 0.7; transparent: true;"
-          animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
-        ></a-box>
+        <div className="space-y-6">
+          {/* タイトル入力 */}
+          <div>
+            <label className="block text-sm font-medium text-slate-500 mb-1">タイトル</label>
+            <input 
+              type="text" 
+              className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all"
+              placeholder="例：所沢の夕暮れ"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
 
-        <a-camera gps-camera rotation-reader></a-camera>
-      </a-scene>
+          {/* メモ入力 */}
+          <div>
+            <label className="block text-sm font-medium text-slate-500 mb-1">思い出メモ</label>
+            <textarea 
+              className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 h-32 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all"
+              placeholder="どんなことがあった？"
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+            />
+          </div>
 
-      {/* 案内表示 */}
-      <div style={{
-        position: 'absolute', bottom: '30px', width: '100%', textAlign: 'center', 
-        zIndex: 999, color: 'white', fontFamily: 'sans-serif', fontSize: '14px'
-      }}>
-        カメラが映らない場合はページを3回ほどリロードしてください
+          {/* 位置情報取得ボタン */}
+          <button 
+            onClick={getGeoLocation}
+            className="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-cyan-200 active:scale-95 transition-transform"
+          >
+            {coords ? `📍 取得完了 (${coords.lat.toFixed(3)})` : '📍 現在地を記録する'}
+          </button>
+
+          {/* 写真選択（見た目だけ） */}
+          <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center text-slate-400 hover:bg-white/50 transition-all cursor-pointer">
+            📷 写真をアップロード
+          </div>
+
+          {/* 登録ボタン */}
+          <button className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 transition-colors">
+            カプセルを生成する
+          </button>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
