@@ -35,9 +35,9 @@ export default function ARPage() {
       />
       <Script 
         src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js" 
-        strategy="lazyOnload"
+        strategy="afterInteractive" // ここを少し遅らせて確実に読み込む
       />
-
+      
       {/* 2. ARシーン（カメラと物体の設定） */}
       <a-scene
         embedded
