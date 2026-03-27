@@ -29,7 +29,7 @@ export default function ARPage() {
 
       <a-scene
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"
+        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false; facingMode: environment;"
         vr-mode-ui="enabled: false"
       >
         {/* 葛西臨海公園の座標に設置 */}
