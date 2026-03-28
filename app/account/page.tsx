@@ -1,16 +1,37 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import GachaCapsule from '../components/GachaCapsule'; // 👈 巨大ガチャカプセルを再利用！
+// 👇 useRouter を追加
+import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
+import GachaCapsule from '../components/GachaCapsule';
 
 export default function AccountPage() {
-  // ダミーデータ（本来はSupabaseのAuthから取得）
+  const router = useRouter();
+  
+  // 🔐 Supabaseクライアントを初期化
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // 🚪 ログアウト処理
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      alert('Logout failed: ' + error.message);
+    } else {
+      // 成功したらキャッシュをクリアしてログイン画面へ
+      window.location.href = '/login';
+    }
+  };
+
+  // ダミーデータ
   const user = {
     name: "所沢のSE",
     age: 23,
     joined: "2024.04",
-    capsulesHandled: 42 // これまで扱った思い出カプセルの数（ダミー）
+    capsulesHandled: 42 
   };
 
   const goals = [
@@ -36,7 +57,6 @@ export default function AccountPage() {
         {/* 👤 プロフィール & 巨大ガチャカプセル */}
         <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200/50 border border-white mb-8">
           <div className="flex items-center gap-8 mb-8">
-            {/* ここで巨大ガチャカプセルを「プロフィールアイコン」として再利用！ */}
             <div className="flex-shrink-0 animate-float-slow">
               <GachaCapsule size="large" active={true} />
             </div>
@@ -48,7 +68,6 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* 実績セクション */}
           <div className="grid grid-cols-2 gap-4">
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center">
               <p className="text-4xl mb-1">💊</p>
@@ -85,10 +104,13 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* 設定ボタン類 */}
-        <Link href="/" className="block w-full text-center py-4 bg-white rounded-2xl border border-slate-100 font-bold text-slate-600 hover:bg-slate-50 active:scale-95 transition-all text-sm">
+        {/* 👇 修正：Link から ログアウトボタンに変更 */}
+        <button 
+          onClick={handleLogout}
+          className="block w-full text-center py-4 bg-white rounded-2xl border border-slate-100 font-bold text-red-500 hover:bg-red-50 active:scale-95 transition-all text-sm shadow-sm"
+        >
           ログアウト
-        </Link>
+        </button>
 
       </div>
 
