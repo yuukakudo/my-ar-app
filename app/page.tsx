@@ -1,71 +1,69 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Webcam from 'react-webcam';
+import Link from 'next/link';
+import GachaCapsule from './components/GachaCapsule';
 
-export default function CreateMemory() {
-  const [title, setTitle] = useState('');
-  const [memo, setMemo] = useState('');
-  const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+export default function ArHomePage() {
+  const [mounted, setMounted] = useState(false);
 
-  // 現在地を取得する関数
-  const getGeoLocation = () => {
-    navigator.geolocation.getCurrentPosition((position) => {
-      setCoords({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      });
-    });
-  };
+  // クライアントサイドでのみ実行（ハイドレーションエラー防止）
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 font-sans">
-      {/* ポケポケ風：ガラスのようなヘッダー */}
-      <div className="max-w-md mx-auto bg-white/70 backdrop-blur-md rounded-3xl shadow-xl p-8 border border-white/40">
-        <h1 className="text-2xl font-bold text-slate-800 mb-6 text-center">思い出をカプセルに</h1>
+    <div className="relative h-screen w-full bg-black overflow-hidden">
+      {/* 🎥 背景：ARカメラ */}
+      <Webcam
+        audio={false}
+        className="absolute inset-0 w-full h-full object-cover"
+        videoConstraints={{ facingMode: "environment" }}
+      />
 
-        <div className="space-y-6">
-          {/* タイトル入力 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-500 mb-1">タイトル</label>
-            <input 
-              type="text" 
-              className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all"
-              placeholder="例：所沢の夕暮れ"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          {/* メモ入力 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-500 mb-1">思い出メモ</label>
-            <textarea 
-              className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 h-32 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all"
-              placeholder="どんなことがあった？"
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-            />
-          </div>
-
-          {/* 位置情報取得ボタン */}
-          <button 
-            onClick={getGeoLocation}
-            className="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-full shadow-lg shadow-cyan-200 active:scale-95 transition-transform"
-          >
-            {coords ? `📍 取得完了 (${coords.lat.toFixed(3)})` : '📍 現在地を記録する'}
-          </button>
-
-          {/* 写真選択（見た目だけ） */}
-          <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center text-slate-400 hover:bg-white/50 transition-all cursor-pointer">
-            📷 写真をアップロード
-          </div>
-
-          {/* 登録ボタン */}
-          <button className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 transition-colors">
-            カプセルを生成する
-          </button>
+      {/* ✨ 演出：画面中央に浮かぶメインカプセル */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div className="animate-float-slow">
+          {/* 💡 ここでさっきのコンポーネントを large サイズで呼び出す！ */}
+          <GachaCapsule size="large" active={true} />
+        </div>
+        
+        <div className="mt-12 px-6 py-2 bg-black/30 backdrop-blur-lg rounded-full border border-white/20">
+          <p className="text-white font-black tracking-[0.2em] text-[10px] uppercase">
+            Scanning Tokorozawa...
+          </p>
         </div>
       </div>
+
+      {/* 📍 投稿ボタン（フローティング） */}
+      <div className="absolute bottom-28 left-0 right-0 flex justify-center px-8">
+        <Link 
+          href="/create" 
+          className="w-full max-w-xs py-5 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black rounded-[2rem] shadow-[0_10px_40px_rgba(6,182,212,0.4)] text-center text-lg active:scale-95 transition-transform"
+        >
+          MEMORIZE HERE
+        </Link>
+      </div>
+
+      {/* 💡 装飾：UIオーバーレイ */}
+      <div className="absolute top-12 left-8">
+        <h1 className="text-white font-black italic text-2xl tracking-tighter drop-shadow-md">
+          TOKOROZAWA<br/><span className="text-cyan-400">FIELD</span>
+        </h1>
+      </div>
+
+      <style jsx>{`
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-30px) rotate(8deg); }
+        }
+        .animate-float-slow {
+          animation: float-slow 4s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }
