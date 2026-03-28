@@ -3,14 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 // 👈 ヘルパーを使わず、一番標準的なクライアントを使います
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import GachaCapsule from '../components/GachaCapsule';
-
-// 💡 コンポーネントの外で初期化
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,26 +13,31 @@ export default function LoginPage() {
   
   const router = useRouter();
 
+  // 👇 コンポーネント内でブラウザ用クライアントを初期化
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // 🔐 ログイン実行
-　const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
-
-    console.log("Auth Response:", { data, error }); // 👈 ここが Console に出れば勝ちです！
 
     if (error) {
       alert(error.message);
       setLoading(false);
     } else {
-      console.log("3. 成功！セッションを同期します");
-        window.location.href = '/';
+      console.log("3. 成功！Cookieがブラウザに保存されます");
+      // router.push より window.location.href の方が
+      // ミドルウェアとの同期ミスが起きにくいので、今のままでOK！
+      window.location.href = '/';
     }
-};
+  };
     
 
   const handleSignUp = async () => {
