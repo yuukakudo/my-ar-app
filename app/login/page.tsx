@@ -36,14 +36,7 @@ export default function LoginPage() {
       setLoading(false);
     } else {
       console.log("3. 成功！セッションを同期します");
-      
-      // 🔄 一旦ルーターをリフレッシュしてCookieを確定させる
-      router.refresh(); 
-
-      // 🕒 ほんの少し（100ms）だけ待ってから遷移（SEの微調整ｗ）
-      setTimeout(() => {
         window.location.href = '/';
-      }, 100);
     }
 };
     
