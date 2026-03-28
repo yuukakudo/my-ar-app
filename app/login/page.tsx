@@ -39,6 +39,8 @@ export default function LoginPage() {
     window.location.href = '/'; 
     // ※ router.push が動かない時の「SEの強硬手段」です！
     }
+};
+    
 
   const handleSignUp = async () => {
     const { error } = await supabase.auth.signUp({
