@@ -32,12 +32,18 @@ export default function LoginPage() {
     console.log("Auth Response:", { data, error }); // 👈 ここが Console に出れば勝ちです！
 
     if (error) {
-    alert(error.message);
-    setLoading(false);
+      alert(error.message);
+      setLoading(false);
     } else {
-    // 🚀 強制的にトップページへ飛ばす
-    window.location.href = '/'; 
-    // ※ router.push が動かない時の「SEの強硬手段」です！
+      console.log("3. 成功！セッションを同期します");
+      
+      // 🔄 一旦ルーターをリフレッシュしてCookieを確定させる
+      router.refresh(); 
+
+      // 🕒 ほんの少し（100ms）だけ待ってから遷移（SEの微調整ｗ）
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     }
 };
     
