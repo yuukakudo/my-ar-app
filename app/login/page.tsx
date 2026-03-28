@@ -24,20 +24,21 @@ export default function LoginPage() {
     setLoading(true);
 
     // 🔐 ログイン実行
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+　const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
     });
 
+    console.log("Auth Response:", { data, error }); // 👈 ここが Console に出れば勝ちです！
+
     if (error) {
-      alert(`ログイン失敗: ${error.message}`);
-      setLoading(false);
+    alert(error.message);
+    setLoading(false);
     } else {
-      // 成功したらリフレッシュしてホームへ
-      router.push('/');
-      router.refresh();
+    // 🚀 強制的にトップページへ飛ばす
+    window.location.href = '/'; 
+    // ※ router.push が動かない時の「SEの強硬手段」です！
     }
-  };
 
   const handleSignUp = async () => {
     const { error } = await supabase.auth.signUp({
