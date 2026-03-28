@@ -7,24 +7,45 @@ export default function CreateMemory() {
   const [title, setTitle] = useState('');
   const [memo, setMemo] = useState('');
   const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null); // 画像ファイル用
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // プレビュー用
+  const [locationName, setLocationName] = useState<string>(''); // 👈 地名保存用
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 現在地取得
+  // 🌍 現在地と「地名」を取得
   const getGeoLocation = () => {
-    navigator.geolocation.getCurrentPosition((position) => {
-      setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      setCoords({ lat: latitude, lng: longitude });
+
+      try {
+        // 逆ジオコーディングAPIで地名を取得
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+          { headers: { 'Accept-Language': 'ja' } }
+        );
+        const data = await res.json();
+        const city = data.address.city || data.address.town || data.address.village || data.address.suburb || "不明な地点";
+        setLocationName(city);
+      } catch (err) {
+        console.error("地名取得エラー:", err);
+      } finally {
+        setLoading(false);
+      }
+    }, (error) => {
+      alert("位置情報の取得に失敗しました");
+      setLoading(false);
     });
   };
 
-  // 画像が選択された時の処理
+  // 画像選択処理（変更なし）
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file)); // 画面に仮表示するためのURL
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -34,27 +55,23 @@ export default function CreateMemory() {
     setLoading(true);
 
     try {
-      // 1. 画像を Storage にアップロード
-      const fileExtension = imageFile.name.split('.').pop(); // jpgとかpngを取得
-      const fileName = `${Date.now()}.${fileExtension}`; // 例: 1774631019043.png
-
-      const { data: storageData, error: storageError } = await supabase.storage
+      // 1. 画像アップロード
+      const fileExtension = imageFile.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExtension}`;
+      const { error: storageError } = await supabase.storage
         .from('memory-images')
         .upload(fileName, imageFile);
 
-      if (storageError) {
-        console.error('Storageのエラー詳細:', storageError); // これを足す！
-        throw storageError;
-        }
+      if (storageError) throw storageError;
 
-      // 2. アップロードした画像の公開URLを取得
+      // 2. 公開URL取得
       const { data: urlData } = supabase.storage
         .from('memory-images')
         .getPublicUrl(fileName);
 
       const imageUrl = urlData.publicUrl;
 
-      // 3. DB（memoriesテーブル）にデータを保存
+      // 3. DB保存（location_name を追加！）
       const { error: dbError } = await supabase
         .from('memories')
         .insert([{ 
@@ -62,14 +79,16 @@ export default function CreateMemory() {
           memo, 
           lat: coords.lat, 
           lng: coords.lng, 
-          image_url: imageUrl // 本物の画像URLを保存！
+          location_name: locationName, // 👈 自動取得した地名を保存！
+          image_url: imageUrl 
         }]);
 
       if (dbError) throw dbError;
 
-      alert('✨ 写真付きカプセル生成完了！');
-      // リセット処理
-      setTitle(''); setMemo(''); setCoords(null); setImageFile(null); setPreviewUrl(null);
+      alert(`✨ ${locationName}での思い出をカプセル化しました！`);
+      
+      // リセット
+      setTitle(''); setMemo(''); setCoords(null); setLocationName(''); setImageFile(null); setPreviewUrl(null);
     } catch (err: any) {
       alert('エラーが発生しました: ' + err.message);
     } finally {
@@ -95,11 +114,10 @@ export default function CreateMemory() {
             onChange={(e) => setMemo(e.target.value)}
           />
 
-          <button onClick={getGeoLocation} className="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-full shadow-lg active:scale-95 transition-all">
-            {coords ? `📍 取得完了 (${coords.lat.toFixed(3)})` : '📍 現在地を記録する'}
+          <button onClick={getGeoLocation} disabled={loading} className="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-full shadow-lg active:scale-95 transition-all">
+            {locationName ? `📍 ${locationName}` : loading ? '取得中...' : '📍 現在地を記録する'}
           </button>
 
-          {/* 画像アップロード部分 */}
           <div 
             onClick={() => fileInputRef.current?.click()}
             className="relative border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center text-slate-400 hover:bg-white/50 transition-all cursor-pointer overflow-hidden aspect-video flex items-center justify-center"
@@ -113,10 +131,10 @@ export default function CreateMemory() {
           </div>
 
           <button 
-            onClick={handleSave} disabled={loading}
+            onClick={handleSave} disabled={loading || !locationName}
             className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-50"
           >
-            {loading ? '生成中...' : 'カプセルを生成する'}
+            {loading ? '処理中...' : 'カプセルを生成する'}
           </button>
         </div>
       </div>
