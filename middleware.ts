@@ -55,6 +55,13 @@ export async function middleware(request: NextRequest) {
 // 🛡️ 監視対象から除外するパス（静的ファイルなど）
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * 下記のパス以外すべてにミドルウェアを適用する:
+     * - _next/static (静的ファイル)
+     * - _next/image (画像最適化)
+     * - favicon.ico (ファビコン)
+     * - login (ログイン画面自体を監視から外してループを防ぐ 👈 重要！)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|login|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
